@@ -28,46 +28,31 @@ void CustomLog(int msgType, const char *text, va_list args)
     printf("\n");
 }
 
-#define BLOCK_SIZE 30
+#define BLOCK_SIZE 24
 #define COLUMNS 10
 #define ROWS 20
+#define BACKGROUND_COLOR BLACK
+#define BORDER_COLOR DARKGRAY
 
 
-Color intToColor(int value)
+
+Texture2D blockTexture = {};
+
+void drawBlock(int x, int y, int color)
 {
-    switch (value)
-    {
-    case 1:
-        return MAROON;
-    case 2:
-        return BLUE;
-    case 3:
-        return DARKGREEN;
-    case 4:
-        return GOLD;
-    case 5:
-        return ORANGE;
-    case 6:
-        return VIOLET;
-    case 7:
-        return DARKBROWN;
-    case 8:
-        return GRAY;
-    default:
-        return SKYBLUE;
-    }
-}
-
-void drawBlock(int x, int y, Color color)
-{
-    DrawRectangle(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1, color);
+    DrawTextureRec(blockTexture, { (float)color * BLOCK_SIZE, 0, BLOCK_SIZE, BLOCK_SIZE }, { (float)x * BLOCK_SIZE, (float)y * BLOCK_SIZE }, WHITE);
 }
 
 void drawBoard(int board[COLUMNS][ROWS])
 {
     for (int x = 0; x < COLUMNS; x++)
         for (int y = 0; y < ROWS; y++)
-            drawBlock(x, y, intToColor(board[x][y]));
+        {
+            if (board[x][y] != 0)
+                drawBlock(x, y, board[x][y]);
+            else
+                DrawRectangleLines(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1, BORDER_COLOR);
+        }
 }
 
 class Shape {
@@ -100,7 +85,7 @@ public:
     }
 
     void makeGhost() {
-        color = 8;
+        color = 0; // Transparent
     }
 
     void draw()
@@ -111,7 +96,7 @@ public:
             {
                 int bx = i % 3;
                 int by = i / 3;
-                drawBlock(x + bx, y + by, intToColor(color));
+                drawBlock(x + bx, y + by, color);
             }
         }
     }
@@ -442,6 +427,8 @@ int main(void)
 
     float fallInterval = 1.0f;
 
+    blockTexture =  LoadTexture("E:/RaylibStuff/Tetris/Resources/Blocks/spritesheet.png");
+
     while (!WindowShouldClose())
     {
         if (!paused && !gameOver)
@@ -543,7 +530,7 @@ int main(void)
 
         BeginDrawing();
 
-        ClearBackground(DARKBLUE);
+        ClearBackground(BACKGROUND_COLOR);
 
         drawBoard(board);
 
@@ -570,16 +557,18 @@ int main(void)
             DrawText("GAME OVER\n\n\nPress 'r' To\n\n\nRestart", screenWidth / 2 - MeasureText("GAME OVER", 40) / 2, screenHeight / 2 - 40, 40, WHITE);
 
         // Draw Grid over the nextShape
+        DrawRectangle(nextShape.getX() * BLOCK_SIZE, nextShape.getY() * BLOCK_SIZE, BLOCK_SIZE * 3, BLOCK_SIZE * 3, BACKGROUND_COLOR);
         for (int x = 0; x < 3; x++)
-            for (int y = 0; y < 3; y++)
-                DrawRectangle(nextShape.getX() * BLOCK_SIZE + x * BLOCK_SIZE, nextShape.getY() * BLOCK_SIZE + y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1, LIGHTGRAY);
+            for (int y = 0; y < 3; y++){
+                DrawRectangleLines(nextShape.getX() * BLOCK_SIZE + x * BLOCK_SIZE, nextShape.getY() * BLOCK_SIZE + y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1, BORDER_COLOR);
+            }
 
         nextShape.draw();
 
         DrawText("Next Shape", 10 * BLOCK_SIZE + 5, 1 * BLOCK_SIZE, 25, WHITE);
 
         // Draw the level and lines cleared
-        sprintf(scoreString, "Level: %d\n\n\nLines Cleared: %d", level, linesCleared);
+        sprintf(scoreString, "Level: %d\n\n\nLines\n\n\nCleared: %d", level, linesCleared);
         DrawText(scoreString, 10 * BLOCK_SIZE + 5, 10 * BLOCK_SIZE, 16, WHITE);
 
         EndDrawing();
