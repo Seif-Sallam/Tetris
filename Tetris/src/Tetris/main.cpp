@@ -51,6 +51,8 @@ Color intToColor(int value)
         return VIOLET;
     case 7:
         return DARKBROWN;
+    case 8:
+        return GRAY;
     default:
         return SKYBLUE;
     }
@@ -95,6 +97,10 @@ public:
     int getColor() const
     {
         return color;
+    }
+
+    void makeGhost() {
+        color = 8;
     }
 
     void draw()
@@ -387,7 +393,6 @@ int cleanFullRows(int board[COLUMNS][ROWS])
     return cleanedRows;
 }
 
-
 int main(void)
 {
     const int screenWidth = BLOCK_SIZE * (COLUMNS + 5);
@@ -418,18 +423,36 @@ int main(void)
     char scoreString[128] = { 0 };
 
     Shape nextShape(11, 3);
+    Shape ghostShape(4, 0);
+    ghostShape.makeGhost();
+    bool redrawGhost = true;
+
+    bool touchedTheFloor = false;
+
+    float timeInterval = 0.5f;
 
     while (!WindowShouldClose())
     {
         if (!paused && !gameOver)
             time += GetFrameTime();
 
-        if (time > 0.5f && !paused && !gameOver)
+        if (time > timeInterval && !paused && !gameOver)
         {
+            if (touchedTheFloor)
+            {
+                nextShape.setPos(4, 0);
+                playerShape = nextShape;
+                nextShape = Shape(11, 3);
+                if (playerShape.isTouchingFloor(board))
+                    gameOver = true;
+                redrawGhost = true;
+            }
+
             playerShape.moveDown(board);
             time = 0.0f;
-            canMove = playerShape.isTouchingFloor(board) == false;
-            updateOnTouch = !canMove;
+            touchedTheFloor = playerShape.isTouchingFloor(board);
+            updateOnTouch = touchedTheFloor;
+            timeInterval = touchedTheFloor ? 0.15f : 0.5f;
         }
 
         if (updateOnTouch)
@@ -450,17 +473,10 @@ int main(void)
             int fullRows = cleanFullRows(board);
 
             score += fullRows * 100 + (fullRows > 1 ? (fullRows - 1) * 50 : 0);
-
-            nextShape.setPos(4, 0);
-            playerShape = nextShape;
-            nextShape = Shape(11, 3);
-            if (playerShape.isTouchingFloor(board))
-                gameOver = true;
-            canMove = true;
         }
 
         // Process Input
-        if (canMove && !paused && !gameOver)
+        if (!paused && !gameOver)
         {
             if (IsKeyPressed(KEY_SPACE))
             {
@@ -468,14 +484,20 @@ int main(void)
                     playerShape.moveDown(board);
                 updateOnTouch = true;
             }
-            if (IsKeyPressed(KEY_LEFT))
+            if (IsKeyPressed(KEY_LEFT)) {
                 playerShape.move(-1, board);
+                redrawGhost = true;
+            }
 
-            if (IsKeyPressed(KEY_RIGHT))
+            if (IsKeyPressed(KEY_RIGHT)) {
                 playerShape.move(1, board);
+                redrawGhost = true;
+            }
 
-            if (IsKeyPressed(KEY_UP))
+            if (IsKeyPressed(KEY_UP)) {
                 playerShape.rotate();
+                redrawGhost = true;
+            }
 
             if (IsKeyPressed(KEY_DOWN))
             {
@@ -498,6 +520,7 @@ int main(void)
             nextShape = Shape(11, 3);
             paused = false;
             gameOver = false;
+            redrawGhost = true;
         }
 
         BeginDrawing();
@@ -505,6 +528,19 @@ int main(void)
         ClearBackground(DARKBLUE);
 
         drawBoard(board);
+
+        if (redrawGhost)
+        {
+            ghostShape = playerShape;
+            while (!ghostShape.isTouchingFloor(board))
+                ghostShape.moveDown(board);
+
+            ghostShape.makeGhost();
+            redrawGhost = false;
+        }
+
+        ghostShape.draw();
+
         playerShape.draw();
 
         DrawRectangle(10 * BLOCK_SIZE, 0, 5 * BLOCK_SIZE, screenHeight, GRAY);
