@@ -393,6 +393,17 @@ int cleanFullRows(int board[COLUMNS][ROWS])
     return cleanedRows;
 }
 
+int level = 1;
+int linesCleared = 0;
+float speed = 1.0f;
+
+void updateLevelAndSpeed() {
+    level = linesCleared / 10 + 1;
+    speed = 1.0f - (level - 1) * 0.1f;
+    if (speed < 0.1f) speed = 0.1f;
+}
+
+
 int main(void)
 {
     const int screenWidth = BLOCK_SIZE * (COLUMNS + 5);
@@ -404,7 +415,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "Tetris");
 
-    SetTargetFPS(60);
+    SetTargetFPS(20);
 
     int score = 0;
 
@@ -429,30 +440,20 @@ int main(void)
 
     bool touchedTheFloor = false;
 
-    float timeInterval = 0.5f;
+    float fallInterval = 1.0f;
 
     while (!WindowShouldClose())
     {
         if (!paused && !gameOver)
             time += GetFrameTime();
 
-        if (time > timeInterval && !paused && !gameOver)
+        if (time > fallInterval * speed && !paused && !gameOver)
         {
-            if (touchedTheFloor)
-            {
-                nextShape.setPos(4, 0);
-                playerShape = nextShape;
-                nextShape = Shape(11, 3);
-                if (playerShape.isTouchingFloor(board))
-                    gameOver = true;
-                redrawGhost = true;
-            }
-
             playerShape.moveDown(board);
             time = 0.0f;
             touchedTheFloor = playerShape.isTouchingFloor(board);
             updateOnTouch = touchedTheFloor;
-            timeInterval = touchedTheFloor ? 0.15f : 0.5f;
+            canMove = !touchedTheFloor;
         }
 
         if (updateOnTouch)
@@ -471,12 +472,22 @@ int main(void)
 
             // Clean full rows
             int fullRows = cleanFullRows(board);
+            linesCleared += fullRows;
+
+            updateLevelAndSpeed();
 
             score += fullRows * 100 + (fullRows > 1 ? (fullRows - 1) * 50 : 0);
+
+            nextShape.setPos(4, 0);
+            playerShape = nextShape;
+            nextShape = Shape(11, 3);
+            if (playerShape.isTouchingFloor(board))
+                gameOver = true;
+            redrawGhost = true;
         }
 
         // Process Input
-        if (!paused && !gameOver)
+        if (canMove && !paused && !gameOver)
         {
             if (IsKeyPressed(KEY_SPACE))
             {
@@ -521,6 +532,13 @@ int main(void)
             paused = false;
             gameOver = false;
             redrawGhost = true;
+
+            level = 1;
+            linesCleared = 0;
+            score = 0;
+            speed = 1.0f;
+            fallInterval = 1.0f;
+
         }
 
         BeginDrawing();
