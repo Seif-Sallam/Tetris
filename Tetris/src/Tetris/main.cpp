@@ -394,8 +394,13 @@ int main(void)
     const int screenHeight = BLOCK_SIZE * (ROWS + 2);
 
     // Set custom logger
+#ifdef DEBUG
     SetTraceLogCallback(CustomLog);
     SetTraceLogLevel(LOG_ALL);
+#else
+    SetTraceLogLevel(LOG_NONE);
+#endif
+
 
     InitWindow(screenWidth, screenHeight, "Tetris");
 
@@ -433,9 +438,9 @@ int main(void)
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
-    blockTexture =  LoadTexture("E:/RaylibStuff/Tetris/Resources/Blocks/spritesheet.png");
+    blockTexture =  LoadTexture(RESOURCES_DIR"/Blocks/spritesheet.png");
 
-    Texture2D backgroundTexture = LoadTexture("E:/RaylibStuff/Tetris/Resources/background.png");
+    Texture2D backgroundTexture = LoadTexture(RESOURCES_DIR"/background.png");
 
     while (!WindowShouldClose())
     {

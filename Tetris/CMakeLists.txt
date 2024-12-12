@@ -26,5 +26,10 @@ target_link_libraries(${PROJECT_NAME}
 
 target_compile_definitions(${PROJECT_NAME}
 	PRIVATE
-		RESOURCES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources"
+		RESOURCES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/Resources"
 )
+
+# Remove the console window in release mode
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+endif()
