@@ -563,9 +563,6 @@ int main(void)
 
         DrawRectangle(10 * BLOCK_SIZE, 0, 5 * BLOCK_SIZE, screenHeight, GRAY);
 
-        sprintf(scoreString, "Score: %d", score);
-        DrawText(scoreString, 10 * BLOCK_SIZE + 5, 7 * BLOCK_SIZE, 25, WHITE);
-
         if (paused)
             DrawText("PAUSED", screenWidth / 2 - MeasureText("PAUSED", 40) / 2, screenHeight / 2 - 40, 40, WHITE);
 
@@ -580,6 +577,10 @@ int main(void)
         nextShape.draw();
 
         DrawText("Next Shape", 10 * BLOCK_SIZE + 5, 1 * BLOCK_SIZE, 25, WHITE);
+
+        // Draw the level and lines cleared
+        sprintf(scoreString, "Level: %d\n\n\nLines Cleared: %d", level, linesCleared);
+        DrawText(scoreString, 10 * BLOCK_SIZE + 5, 10 * BLOCK_SIZE, 16, WHITE);
 
         EndDrawing();
     }
