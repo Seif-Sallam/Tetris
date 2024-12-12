@@ -31,8 +31,8 @@ void CustomLog(int msgType, const char *text, va_list args)
 #define BLOCK_SIZE 24
 #define COLUMNS 10
 #define ROWS 20
-#define BACKGROUND_COLOR BLACK
-#define BORDER_COLOR DARKGRAY
+#define BACKGROUND_COLOR { 34, 32, 52, 255 }
+#define BORDER_COLOR { 44, 42, 60, 255 }
 
 
 
@@ -388,11 +388,10 @@ void updateLevelAndSpeed() {
     if (speed < 0.1f) speed = 0.1f;
 }
 
-
 int main(void)
 {
-    const int screenWidth = BLOCK_SIZE * (COLUMNS + 5);
-    const int screenHeight = BLOCK_SIZE * ROWS;
+    const int screenWidth = BLOCK_SIZE * (COLUMNS + 9);
+    const int screenHeight = BLOCK_SIZE * (ROWS + 2);
 
     // Set custom logger
     SetTraceLogCallback(CustomLog);
@@ -418,7 +417,7 @@ int main(void)
 
     char scoreString[128] = { 0 };
 
-    Shape nextShape(11, 3);
+    Shape nextShape(13, 3);
     Shape ghostShape(4, 0);
     ghostShape.makeGhost();
     bool redrawGhost = true;
@@ -427,7 +426,16 @@ int main(void)
 
     float fallInterval = 1.0f;
 
+    // Define the camera with the desired offset
+    Camera2D camera = { 0 };
+    camera.target = { -24.0f, -24.0f };
+    camera.offset = { 0.0f, 0.0f };
+    camera.rotation = 0.0f;
+    camera.zoom = 1.0f;
+
     blockTexture =  LoadTexture("E:/RaylibStuff/Tetris/Resources/Blocks/spritesheet.png");
+
+    Texture2D backgroundTexture = LoadTexture("E:/RaylibStuff/Tetris/Resources/background.png");
 
     while (!WindowShouldClose())
     {
@@ -467,7 +475,7 @@ int main(void)
 
             nextShape.setPos(4, 0);
             playerShape = nextShape;
-            nextShape = Shape(11, 3);
+            nextShape = Shape(13, 3);
             if (playerShape.isTouchingFloor(board))
                 gameOver = true;
             redrawGhost = true;
@@ -515,7 +523,7 @@ int main(void)
                     board[x][y] = 0;
             nextShape.setPos(4, 0);
             playerShape = nextShape;
-            nextShape = Shape(11, 3);
+            nextShape = Shape(13, 3);
             paused = false;
             gameOver = false;
             redrawGhost = true;
@@ -531,6 +539,8 @@ int main(void)
         BeginDrawing();
 
         ClearBackground(BACKGROUND_COLOR);
+
+        BeginMode2D(camera);
 
         drawBoard(board);
 
@@ -548,15 +558,17 @@ int main(void)
 
         playerShape.draw();
 
-        DrawRectangle(10 * BLOCK_SIZE, 0, 5 * BLOCK_SIZE, screenHeight, GRAY);
+        DrawTextureRec(backgroundTexture, { 100, 100, 7 * BLOCK_SIZE, screenHeight }, { 11 * BLOCK_SIZE, -24 }, WHITE);
 
-        if (paused)
-            DrawText("PAUSED", screenWidth / 2 - MeasureText("PAUSED", 40) / 2, screenHeight / 2 - 40, 40, WHITE);
+        // Draw Grid and Border over the nextShape
+        for (int x = -1; x <= 3; x++)
+        {
+            for (int y = -1; y <= 3; y++)
+            {
+                drawBlock(nextShape.getX() + x, nextShape.getY() + y, 9);
+            }
+        }
 
-        if (gameOver)
-            DrawText("GAME OVER\n\n\nPress 'r' To\n\n\nRestart", screenWidth / 2 - MeasureText("GAME OVER", 40) / 2, screenHeight / 2 - 40, 40, WHITE);
-
-        // Draw Grid over the nextShape
         DrawRectangle(nextShape.getX() * BLOCK_SIZE, nextShape.getY() * BLOCK_SIZE, BLOCK_SIZE * 3, BLOCK_SIZE * 3, BACKGROUND_COLOR);
         for (int x = 0; x < 3; x++)
             for (int y = 0; y < 3; y++){
@@ -565,12 +577,36 @@ int main(void)
 
         nextShape.draw();
 
-        DrawText("Next Shape", 10 * BLOCK_SIZE + 5, 1 * BLOCK_SIZE, 25, WHITE);
+        DrawText("Next Shape", 12 * BLOCK_SIZE + 5, 1 * BLOCK_SIZE, 16, RAYWHITE);
 
         // Draw the level and lines cleared
-        sprintf(scoreString, "Level: %d\n\n\nLines\n\n\nCleared: %d", level, linesCleared);
-        DrawText(scoreString, 10 * BLOCK_SIZE + 5, 10 * BLOCK_SIZE, 16, WHITE);
+        sprintf(scoreString, "Level: %d\n\nLines Cleared: %d", level, linesCleared);
+        DrawText(scoreString, 12 * BLOCK_SIZE + 5, 10 * BLOCK_SIZE, 16, RAYWHITE);
 
+
+
+        // Draw A border around the board of the texture with the block texture at index 9
+        for (int y = -1; y <= ROWS; y++)
+        {
+            if (y == -1 || y == ROWS)
+            {
+                for (int x = -1; x <= COLUMNS; ++x)
+                    drawBlock(x, y, 9);
+            }
+            else
+            {
+                drawBlock(-1, y, 9);
+                drawBlock(COLUMNS, y, 9);
+            }
+        }
+
+        if (paused)
+            DrawText("PAUSED", 15, 25, 20, WHITE);
+
+        if (gameOver)
+            DrawText("      GAME OVER\n\n\nPress 'R' to restart", screenWidth / 2 - MeasureText("GAME OVER", 40) / 2 - 70, screenHeight / 2 + 100, 30, WHITE);
+
+        EndMode2D();
         EndDrawing();
     }
 
